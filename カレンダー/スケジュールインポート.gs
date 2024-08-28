@@ -84,6 +84,8 @@ function createDocuments(folderId) {
  */
 function createCalendarImportFile(folderId, fileName, contents) {
 
+  let result = "";
+
   // ファイルに書き込む内容
   let writeContents = "";
 
@@ -141,7 +143,9 @@ function createCalendarImportFile(folderId, fileName, contents) {
 
   writeContents = writeContents.substring(1, writeContents.length);
 
-  createCsvFile(folderId, fileName, writeContents);
+  result = createCsvFile(folderId, fileName, writeContents);
+
+  return result;
 }
 
 /**
@@ -149,22 +153,55 @@ function createCalendarImportFile(folderId, fileName, contents) {
  * @param {string} folderId フォルダID
  * @param {string} fileName ファイル名
  * @param {string} contents ファイルの内容
+ * @return {string} CSVファイルID
  */
-function createCsvFile(folderId, fileName, contents) {  
+function createCsvFile(folderId, fileName, contents) {
+
+  let result = "";
 
   const contentType = 'text/csv';                     // コンテンツタイプ
   const charset = 'UTF-8';                            // 文字コード
   const folder = DriveApp.getFolderById(folderId);    // 出力するフォルダ
 
   const blob = Utilities.newBlob('', contentType, fileName).setDataFromString(contents, charset);
-  folder.createFile(blob);
+  
+  result = folder.createFile(blob).getId();
+  return result;
 }
+
+/**
+ * CSVからカレンダーにインポートする。
+ * @param {string} csvFileId CSVファイルID
+ * @param {string} calendarId カレンダーID
+ */
+function importCSVtoCalendar(csvFileId, calendarId) {
+
+  var calendar = CalendarApp.getCalendarById(calendarId);
+
+  var file = DriveApp.getFileById(csvFileId);
+  var csvDatas = Utilities.parseCsv(file.getBlob().getDataAsString());
+
+  for (var line of csvDatas) {
+    var title = line[2];
+    var startTime = new Date("2024/" + line[0] + " " + line[1]);
+    var endTime = new Date("2024/" + line[0] + " " + line[1]);
+    var description = line[2];
+
+    // Logger.log("title:" + title + ", startTime:" + startTime + ", endTime:" + endTime + ", description" + description);
+
+    calendar.createEvent(title, startTime, endTime, {
+      description: description,
+    });
+  }
+}
+
 
 /**
  * メイン
  */
 function main() {
-  const FOLDER_ID = "<フォルダID>"
+  const FOLDER_ID = "<フォルダ名ID>";
+  const CALENDAR_ID = "<カレンダーID>";
 
   /* ドキュメントを作成する */
   let convertedFileIds = createDocuments(FOLDER_ID);
@@ -173,6 +210,7 @@ function main() {
   for (let convertedFileId of convertedFileIds) {
     let text = getText(convertedFileId);
     const fileName = DriveApp.getFileById(convertedFileId).getName() + ".csv";
-    createCalendarImportFile(FOLDER_ID, fileName, text);
+    const fileId = createCalendarImportFile(FOLDER_ID, fileName, text);
+    importCSVtoCalendar(fileId, CALENDAR_ID);
   }
 }
