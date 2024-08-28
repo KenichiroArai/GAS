@@ -237,8 +237,8 @@ function importCSVtoCalendar(csvFileId, calendarId) {
  * メイン
  */
 function main() {
-  const FOLDER_ID = "1psh1lkhub0NGbwa1FCyZHdjKeugXBE2D";
-  const CALENDAR_ID = "eb0169d290421b24bbf00ff95c9269c04922feba9691ecd1c24cbf1936006b3d@group.calendar.google.com";
+  const FOLDER_ID = "<フォルダID>";
+  const CALENDAR_ID = "<カレンダーID>";
 
   /* ドキュメントを作成する */
   let convertedFileIds = createDocuments(FOLDER_ID);
