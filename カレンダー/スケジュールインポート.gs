@@ -86,6 +86,11 @@ function createCalendarImportFile(folderId, fileName, contents) {
 
   let result = "";
 
+  const PATTERN_DATA = /.(\d+\/\d+) \(.\) (\d+:\d+) ?~? ?(.*)/;
+  const PATTERN_HEAD_SQUARE = /^■/;
+  const PATTERN_SQUARE = /■/;
+  const PATTERN_DATA2 = /(.+)■(\d+\/\d+) \(.\) (\d+:\d+) ?~? ?(.*)/;
+
   // ファイルに書き込む内容
   let writeContents = "";
 
@@ -109,19 +114,30 @@ function createCalendarImportFile(folderId, fileName, contents) {
       continue;
     }
 
-    const PATTERN_DATA = /.(\d+\/\d+) \(.\) (\d+:\d+)~(.*)/;
-
-    const PATTERN_SQUARE = /^■/;
     // ■が先頭にないか
-    if (!line_wk.match(PATTERN_SQUARE)) {
+    if (!line_wk.match(PATTERN_HEAD_SQUARE)) {
       // 先頭にない場合
 
-      const matchResult = line_wk.match(PATTERN_DATA);
+      let matchResult = line_wk.match(PATTERN_DATA);
       // データパーンに一致しないか
       if (!matchResult) {
         // 一致しない場合
 
         writeContents += line_wk;
+
+        continue;
+      }
+
+      let matchResultSquare = matchResult[3].match(PATTERN_SQUARE);
+      if (matchResultSquare) {
+        matchResult2 = matchResult[3].match(PATTERN_DATA2);
+        matchResult[3] = matchResult2[1];
+
+        writeContents += "\n";
+        writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3];
+
+        writeContents += "\n";
+        writeContents += matchResult2[2] + ", " + matchResult2[3] + ", " + matchResult2[4];
 
         continue;
       }
@@ -134,6 +150,20 @@ function createCalendarImportFile(folderId, fileName, contents) {
     
     const matchResult = line_wk.match(PATTERN_DATA);
     if (!matchResult) {
+      continue;
+    }
+
+    let matchResultSquare = matchResult[3].match(PATTERN_SQUARE);
+    if (matchResultSquare) {
+      matchResult2 = matchResult[3].match(PATTERN_DATA2);
+      matchResult[3] = matchResult2[1];
+
+      writeContents += "\n";
+      writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3];
+
+      writeContents += "\n";
+      writeContents += matchResult2[2] + ", " + matchResult2[3] + ", " + matchResult2[4];
+
       continue;
     }
 
@@ -182,10 +212,17 @@ function importCSVtoCalendar(csvFileId, calendarId) {
   var csvDatas = Utilities.parseCsv(file.getBlob().getDataAsString());
 
   for (var line of csvDatas) {
-    var title = line[2];
-    var startTime = new Date("2024/" + line[0] + " " + line[1]);
-    var endTime = new Date("2024/" + line[0] + " " + line[1]);
-    var description = line[2];
+    const title = line[2];
+    const year = new Date().getFullYear();
+    const date = new Date(year + "/" + line[0]);
+    const times = line[1].split(":");
+    const hours = times[0];
+    date.setHours(hours);
+    const minutes = times[1];
+    date.setMinutes(minutes);
+    const startTime = date;
+    const endTime = date;
+    const description = line[2];
 
     // Logger.log("title:" + title + ", startTime:" + startTime + ", endTime:" + endTime + ", description" + description);
 
@@ -200,8 +237,8 @@ function importCSVtoCalendar(csvFileId, calendarId) {
  * メイン
  */
 function main() {
-  const FOLDER_ID = "<フォルダ名ID>";
-  const CALENDAR_ID = "<カレンダーID>";
+  const FOLDER_ID = "1psh1lkhub0NGbwa1FCyZHdjKeugXBE2D";
+  const CALENDAR_ID = "eb0169d290421b24bbf00ff95c9269c04922feba9691ecd1c24cbf1936006b3d@group.calendar.google.com";
 
   /* ドキュメントを作成する */
   let convertedFileIds = createDocuments(FOLDER_ID);
