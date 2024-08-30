@@ -27,11 +27,55 @@ function getTagetFileIds(folderId) {
 }
 
 /**
- * 対象ファイルIDからドキュメントを作成する。
- * @param {string} targetFileId 対象ファイルID
+ * ファイルIDからファイルを削除する。
+ * @param {string} fileId ファイルID
+ * @param {string} excludedFileId 対象外ファイルID
+ */
+function deleteFileById(fileId, excludedFileId) {
+  // ファイルIDからファイルを取得
+  var file = DriveApp.getFileById(fileId);
+  
+  // ファイル名を取得
+  var fileName = file.getName();
+  
+  // ファイル名に該当するファイルを検索
+  var files = DriveApp.getFilesByName(fileName);
+  
+  // 該当するファイルを削除
+  while (files.hasNext()) {
+    var fileToDelete = files.next();
+
+    // 該当するファイルが対象外か
+    if (fileToDelete.getId() == excludedFileId) {
+      // 対象外の場合
+
+      continue;
+    }
+
+    fileToDelete.setTrashed(true); // ファイルをゴミ箱に移動
+  }
+}
+
+/**
+ * ファイル名からファイルを削除する。
+ * @param {string} fileName ファイル名
+ */
+function deleteFileByName(fileName) {
+  var files = DriveApp.getFilesByName(fileName);
+  while (files.hasNext()) {
+    var file = files.next();
+    file.setTrashed(true);
+  }
+}
+
+
+/**
+ * 入力ファイルIDからドキュメントを作成する。
+ * @param {string} inputFileId 入力ファイルID
+ * @param {string} outputFolderId 出力フォルダID
  * @return {string} ドキュメントID
  */
-function createDocument(targetFileId) {
+function createDocument(inputFileId, outputFolderId) {
   var result = ""
 
   let ocrOption = {
@@ -41,7 +85,10 @@ function createDocument(targetFileId) {
   let ocrResource = {
     mimeType: MimeType.GOOGLE_DOCS,
   };
-  let documentFile = Drive.Files.copy(ocrResource, targetFileId, ocrOption);
+  let documentFile = Drive.Files.copy(ocrResource, inputFileId, ocrOption);
+  
+  // コピー先フォルダにファイルを移動
+  DriveApp.getFileById(documentFile.id).moveTo(DriveApp.getFolderById(outputFolderId));
 
   result = documentFile.id;
 
@@ -61,16 +108,21 @@ function getText(documentFileId) {
 }
 
 /**
- * フォルダIDに該当するファイル一覧の全てのドキュメントを作成する。
- * @param {string} folderId フォルダID
+ * 入力フォルダIDに該当するファイル一覧の全てのドキュメントを出力フォルダIDのフォルダ内に作成する。
+ * @param {string} inputFolderId 入力フォルダID
+ * @param {string} outputFolderId 出力フォルダID
  * @return {string[]} ドキュメントIDの一覧
  */
-function createDocuments(folderId) {
+function createDocuments(inputFolderId, outputFolderId) {
   let result = [];
-  let tagetFileIds = getTagetFileIds(folderId);
+  let tagetFileIds = getTagetFileIds(inputFolderId);
   for (let targetFileId of tagetFileIds) {
-    let convertedFileId = createDocument(targetFileId);
+
+    let convertedFileId = createDocument(targetFileId, outputFolderId);
     result.push(convertedFileId);
+    
+    // ファイルを削除する
+    deleteFileById(convertedFileId, convertedFileId);
   }
   return result;
 }
@@ -80,9 +132,10 @@ function createDocuments(folderId) {
  * @param {string} folderId フォルダID
  * @param {string} fileName ファイル名
  * @param {string} contents 中身
+ * @param {string} outputFolderId 出力フォルダID
  * @return {string} インポートファイルID
  */
-function createCalendarImportFile(folderId, fileName, contents) {
+function createCalendarImportFile(folderId, fileName, contents, outputFolderId) {
 
   let result = "";
 
@@ -173,7 +226,7 @@ function createCalendarImportFile(folderId, fileName, contents) {
 
   writeContents = writeContents.substring(1, writeContents.length);
 
-  result = createCsvFile(folderId, fileName, writeContents);
+  result = createCsvFile(folderId, fileName, writeContents, outputFolderId);
 
   return result;
 }
@@ -183,9 +236,10 @@ function createCalendarImportFile(folderId, fileName, contents) {
  * @param {string} folderId フォルダID
  * @param {string} fileName ファイル名
  * @param {string} contents ファイルの内容
+ * @param {string} outputFolderId 出力フォルダID
  * @return {string} CSVファイルID
  */
-function createCsvFile(folderId, fileName, contents) {
+function createCsvFile(folderId, fileName, contents, outputFolderId) {
 
   let result = "";
 
@@ -195,7 +249,13 @@ function createCsvFile(folderId, fileName, contents) {
 
   const blob = Utilities.newBlob('', contentType, fileName).setDataFromString(contents, charset);
   
-  result = folder.createFile(blob).getId();
+  const file = folder.createFile(blob);
+  result = file.getId();
+  
+  // ファイルを移動する
+  const outputFolder = DriveApp.getFolderById(outputFolderId); // 移動先のフォルダ
+  file.moveTo(outputFolder);
+
   return result;
 }
 
@@ -224,7 +284,7 @@ function importCSVtoCalendar(csvFileId, calendarId) {
     const endTime = date;
     const description = line[2];
 
-    // Logger.log("title:" + title + ", startTime:" + startTime + ", endTime:" + endTime + ", description" + description);
+    console.log("【カレンダーインポートデータ】title:%s, startTime:%s, endTime:%s, description:%s", title, startTime, endTime, description);
 
     calendar.createEvent(title, startTime, endTime, {
       description: description,
@@ -232,22 +292,54 @@ function importCSVtoCalendar(csvFileId, calendarId) {
   }
 }
 
+/**
+ * ファイルを移動する。
+ * @param {string} fileId ファイルID
+ * @param {string} folderId フォルダID
+ */
+function moveFileToFolder(fileId, folderId) {
+  var file = DriveApp.getFileById(fileId);
+  var folder = DriveApp.getFolderById(folderId);
+  file.moveTo(folder);
+}
 
 /**
  * メイン
  */
 function main() {
-  const FOLDER_ID = "<フォルダID>";
+
+  /* フォルダの指定。全て同じフォルダIDに指定可能 */
+  // インポート対象
+  const IMPORT_TARGET_FOLDER_ID = "<インポート対象フォルダID>>";
+  // インポート完了
+  const IMPORT_COMPLETED_FOLDER_ID = "<インポート完了フォルダID>>";
+  // 中間ファイル生成
+  const INTERMEDIATE_FILE_GENERATION_FOLDER_ID = "<中間ファイル生成フォルダID>>";
+
+  /* カレンダーIDの定義 */
+  // カレンダーID
   const CALENDAR_ID = "<カレンダーID>";
 
   /* ドキュメントを作成する */
-  let convertedFileIds = createDocuments(FOLDER_ID);
+  let convertedFileIds = createDocuments(IMPORT_TARGET_FOLDER_ID, INTERMEDIATE_FILE_GENERATION_FOLDER_ID);
 
   /* テキストを出力する */
   for (let convertedFileId of convertedFileIds) {
     let text = getText(convertedFileId);
     const fileName = DriveApp.getFileById(convertedFileId).getName() + ".csv";
-    const fileId = createCalendarImportFile(FOLDER_ID, fileName, text);
+
+    // ファイル削除
+    deleteFileByName(fileName);
+
+    const fileId = createCalendarImportFile(IMPORT_TARGET_FOLDER_ID, fileName, text, INTERMEDIATE_FILE_GENERATION_FOLDER_ID);
     importCSVtoCalendar(fileId, CALENDAR_ID);
   }
+
+  /* インポート対象のファイルをインポート完了に移動する。 */
+  let tagetFileIds = getTagetFileIds(IMPORT_TARGET_FOLDER_ID);
+  for (let targetFileId of tagetFileIds) {
+    // ファイルの移動
+    moveFileToFolder(targetFileId, IMPORT_COMPLETED_FOLDER_ID);
+  }
+
 }
