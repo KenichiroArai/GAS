@@ -224,22 +224,7 @@ function importSchedule() {
           continue;
         }
 
-        let matchResultSquare = matchResult[3].match(PATTERN_SQUARE);
-        if (matchResultSquare) {
-          matchResult2 = matchResult[3].match(PATTERN_DATA2);
-          matchResult[3] = matchResult2[1];
-
-          writeContents += "\n";
-          writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3] + ", " + matchResult[3];
-
-          writeContents += "\n";
-          writeContents += matchResult2[2] + ", " + matchResult2[3] + ", " + matchResult2[4] + ", " + matchResult2[4];
-
-          continue;
-        }
-
-        writeContents += "\n";
-        writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3] + ", " + matchResult[3];
+        writeContents += getWriteContents(matchResult);
 
         continue;
       }
@@ -249,27 +234,43 @@ function importSchedule() {
         continue;
       }
 
-      let matchResultSquare = matchResult[3].match(PATTERN_SQUARE);
-      if (matchResultSquare) {
-        matchResult2 = matchResult[3].match(PATTERN_DATA2);
-        matchResult[3] = matchResult2[1];
-
-        writeContents += "\n";
-        writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3] + ", " + matchResult[3];
-
-        writeContents += "\n";
-        writeContents += matchResult2[2] + ", " + matchResult2[3] + ", " + matchResult2[4] + ", " + matchResult2[4];
-
-        continue;
-      }
-
-      writeContents += "\n";
-      writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3] + ", " + matchResult[3];
+      writeContents += getWriteContents(matchResult);
     }
 
     writeContents = writeContents.substring(1, writeContents.length);
 
     result = createCsvFile(folderId, fileName, writeContents, outputFolderId);
+
+    return result;
+  }
+
+  /**
+   * 書き込み中身を返す。
+   * @param {string} matchResult マッチ結果
+   * @return {string} 書き込み中身
+   */
+  function getWriteContents(matchResult) {
+    let result = "";
+
+    const PATTERN_SQUARE = /■/;
+    const PATTERN_DATA2 = /(.+)■(\d+\/\d+) \(.\) (\d+:\d+) ?~? ?(.*)/;
+
+    let matchResultSquare = matchResult[3].match(PATTERN_SQUARE);
+    if (matchResultSquare) {
+      matchResult2 = matchResult[3].match(PATTERN_DATA2);
+      matchResult[3] = matchResult2[1];
+
+      result += "\n";
+      result += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3] + ", " + matchResult[3];
+
+      result += "\n";
+      result += matchResult2[2] + ", " + matchResult2[3] + ", " + matchResult2[4] + ", " + matchResult2[4];
+
+      return result;
+    }
+
+    result += "\n";
+    result += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3] + ", " + matchResult[3];
 
     return result;
   }
