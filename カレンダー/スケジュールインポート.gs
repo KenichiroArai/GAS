@@ -5,11 +5,11 @@ function importSchedule() {
 
   /* フォルダの指定。全て同じフォルダIDに指定可能 */
   // インポート対象
-  const IMPORT_TARGET_FOLDER_ID = "<インポート対象フォルダID>>";
+  const IMPORT_TARGET_FOLDER_ID = "<インポート対象フォルダID>";
   // インポート完了
-  const IMPORT_COMPLETED_FOLDER_ID = "<インポート完了フォルダID>>";
+  const IMPORT_COMPLETED_FOLDER_ID = "<インポート完了フォルダID>";
   // 中間ファイル生成
-  const INTERMEDIATE_FILE_GENERATION_FOLDER_ID = "<中間ファイル生成フォルダID>>";
+  const INTERMEDIATE_FILE_GENERATION_FOLDER_ID = "<中間ファイル生成フォルダID>";
 
   /* カレンダーIDの定義 */
   // カレンダーID
@@ -230,16 +230,16 @@ function importSchedule() {
           matchResult[3] = matchResult2[1];
 
           writeContents += "\n";
-          writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3];
+          writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3] + ", " + matchResult[3];
 
           writeContents += "\n";
-          writeContents += matchResult2[2] + ", " + matchResult2[3] + ", " + matchResult2[4];
+          writeContents += matchResult2[2] + ", " + matchResult2[3] + ", " + matchResult2[4] + ", " + matchResult2[4];
 
           continue;
         }
 
         writeContents += "\n";
-        writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3];
+        writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3] + ", " + matchResult[3];
 
         continue;
       }
@@ -255,16 +255,16 @@ function importSchedule() {
         matchResult[3] = matchResult2[1];
 
         writeContents += "\n";
-        writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3];
+        writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3] + ", " + matchResult[3];
 
         writeContents += "\n";
-        writeContents += matchResult2[2] + ", " + matchResult2[3] + ", " + matchResult2[4];
+        writeContents += matchResult2[2] + ", " + matchResult2[3] + ", " + matchResult2[4] + ", " + matchResult2[4];
 
         continue;
       }
 
       writeContents += "\n";
-      writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3];
+      writeContents += matchResult[1] + ", " + matchResult[2] + ", " + matchResult[3] + ", " + matchResult[3];
     }
 
     writeContents = writeContents.substring(1, writeContents.length);
@@ -325,7 +325,7 @@ function importSchedule() {
       date.setMinutes(minutes);
       const startTime = date;
       const endTime = date;
-      const description = line[2];
+      const description = line[3];
 
       console.log("【カレンダーインポートデータ】title:%s, startTime:%s, endTime:%s, description:%s", title, startTime, endTime, description);
 
