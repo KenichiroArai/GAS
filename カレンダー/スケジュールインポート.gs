@@ -50,7 +50,7 @@ function importSchedule() {
     var result = [];
 
     let folder = DriveApp.getFolderById(folderId);
-    
+
     let files = folder.getFiles();
     while(files.hasNext()) {
       let file = files.next();
@@ -77,13 +77,13 @@ function importSchedule() {
   function deleteFileById(fileId, excludedFileId) {
     // ファイルIDからファイルを取得
     var file = DriveApp.getFileById(fileId);
-    
+
     // ファイル名を取得
     var fileName = file.getName();
-    
+
     // ファイル名に該当するファイルを検索
     var files = DriveApp.getFilesByName(fileName);
-    
+
     // 該当するファイルを削除
     while (files.hasNext()) {
       var fileToDelete = files.next();
@@ -129,7 +129,7 @@ function importSchedule() {
       mimeType: MimeType.GOOGLE_DOCS,
     };
     let documentFile = Drive.Files.copy(ocrResource, inputFileId, ocrOption);
-    
+
     // コピー先フォルダにファイルを移動
     DriveApp.getFileById(documentFile.id).moveTo(DriveApp.getFolderById(outputFolderId));
 
@@ -163,7 +163,7 @@ function importSchedule() {
 
       let convertedFileId = createDocument(targetFileId, outputFolderId);
       result.push(convertedFileId);
-      
+
       // ファイルを削除する
       deleteFileById(convertedFileId, convertedFileId);
     }
@@ -182,10 +182,10 @@ function importSchedule() {
 
     let result = "";
 
-    const PATTERN_DATA = /.(\d+\/\d+) \(.\) (\d+:\d+) ?~? ?(.*)/;
+    const PATTERN_DATA = /.(\d+\/\d+)\(.\)(\d+:\d+).?(.*)/;
     const PATTERN_HEAD_SQUARE = /^■/;
     const PATTERN_SQUARE = /■/;
-    const PATTERN_DATA2 = /(.+)■(\d+\/\d+) \(.\) (\d+:\d+) ?~? ?(.*)/;
+    const PATTERN_DATA2 = /(.+)■(\d+\/\d+)\(.\)(\d+:\d+).?(.*)/;
 
     // ファイルに書き込む内容
     let writeContents = "";
@@ -228,7 +228,7 @@ function importSchedule() {
 
         continue;
       }
-      
+
       const matchResult = line_wk.match(PATTERN_DATA);
       if (!matchResult) {
         continue;
@@ -253,7 +253,7 @@ function importSchedule() {
     let result = "";
 
     const PATTERN_SQUARE = /■/;
-    const PATTERN_DATA2 = /(.+)■(\d+\/\d+) \(.\) (\d+:\d+) ?~? ?(.*)/;
+    const PATTERN_DATA2 = /(.+)■(\d+\/\d+)\(.\)(\d+:\d+).?(.*)/;
 
     let matchResultSquare = matchResult[3].match(PATTERN_SQUARE);
     if (matchResultSquare) {
@@ -292,10 +292,10 @@ function importSchedule() {
     const folder = DriveApp.getFolderById(folderId);    // 出力するフォルダ
 
     const blob = Utilities.newBlob('', contentType, fileName).setDataFromString(contents, charset);
-    
+
     const file = folder.createFile(blob);
     result = file.getId();
-    
+
     // ファイルを移動する
     const outputFolder = DriveApp.getFolderById(outputFolderId); // 移動先のフォルダ
     file.moveTo(outputFolder);
